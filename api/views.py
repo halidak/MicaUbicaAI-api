@@ -1,3 +1,4 @@
+import copy
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
@@ -40,14 +41,15 @@ def your_view_function(request):
 
         print(board)
         
-        new_stone = minimax(board, 3, 'computer')
+        new_stone = make_best_move(board, 'computer')
+        new_stone['color'] = 'black'
         print(new_stone)
         stone = {
             'square': 1,
-            'index': 4,
+            'index': 2,
             'color': 'black'
         }
-        computerStones.append(stone)
+        computerStones.append(new_stone)
         available_positions = find_available_position(board, player)
         # print(available_positions)
 
@@ -83,39 +85,12 @@ def your_view_function(request):
 
         return Response(response_data)
     
-#TODO
-# def minimax(board, depth, player):
-#     if depth == 0 or game_over(board):
-#         return numberOfMoveablePiecesHeuristic(board, None, player)
-
-#     if player == 'human':
-#         maxEval = float('-inf')
-#         for move in get_all_possible_moves(board, player):
-#             evaluation = minimax(make_move(board, move, player), depth - 1, 'computer')
-#             maxEval = max(maxEval, evaluation)
-#         return maxEval
-#     else:
-#         minEval = float('inf')
-#         for move in get_all_possible_moves(board, player):
-#             evaluation = minimax(make_move(board, move, player), depth - 1, 'human')
-#             minEval = min(minEval, evaluation)
-#         return minEval
-
-# def get_best_move(board, player):
-#     maxEval = float('-inf')
-#     bestMove = None
-#     for move in get_all_possible_moves(board, player):
-#         evaluation = minimax(make_move(board, move, player), 3, player)
-#         if evaluation > maxEval:
-#             maxEval = evaluation
-#             bestMove = move
-#     return bestMove
-    
 
 #minimax algorithm
 def minimax(board, depth, player):
     
     bestMove = float("-inf")
+    best = None
 
     if depth == 0:
         return bestMove
@@ -125,9 +100,15 @@ def minimax(board, depth, player):
     possible_configs = find_available_position(board, player)
     print(possible_configs)
     for move in possible_configs:
-        score = getHeuristic(board, move, player)
+        print("MOVES")
+        print(move)
+        score = heuristic(board, player)
         if bestMove < score:
             bestMove = score 
+            best = move
+            print("BESTTTTT")
+            print(bestMove)
+            return best
 
 
 #     if depth != 0:
@@ -142,91 +123,75 @@ def minimax(board, depth, player):
     else:
         return bestMove
 
+
+
+
+def game_over(board):
+    # Check if a player cannot make a valid move
+    if len(find_available_position(board, 'human')) == 0 or len(find_available_position(board, 'computer')) == 0:
+        return True
+
+    # Check if a player has less than three pieces on the board
+    if board['out']['totalHuman'] == 7 or board['out']['totalComputer'] == 7:
+        return True
+
+    return False
+    
+
 #TODO jos heuristika
 def getHeuristic(board, move, player):
-    if potentional_mills(board, move, player): 
+    if opponent_can_form_mill(board, player): 
         return 350
-    if check_if_mill_blocked(board, move, player): 
+    if potentional_mills(board, move, player): 
         return 300
     else: 
         return 100
         # return numberOfMoveablePiecesHeuristic(board, move, player)
 
+def heuristic(board, player):
+    # Weights for each factor
+    weights = {
+        'num_of_value': 10,
+        'num_of_mills': 40,
+        'blocked_mills': 30,
+        'potential_mills': 50,
+        'possible_moves': 10,
+        'blocked_pieces': 10
+    }
+
+    # Calculate the score for each factor
+    num_of_value_score = numOfValue(board, player) * weights['num_of_value']
+    num_of_mills_score = numOfMills(board, player) * weights['num_of_mills']
+    blocked_mills_score = count_blocked_mills(board, player) * weights['blocked_mills']
+    potential_mills_score = count_potential_mills(board, player) * weights['potential_mills']
+    possible_moves_score = count_possible_moves(board, player) * weights['possible_moves']
+    blocked_pieces_score = count_blocked_pieces(board, player) * weights['blocked_pieces']
+
+    # Sum up the scores to get the total score
+    total_score = num_of_value_score + num_of_mills_score + blocked_mills_score + potential_mills_score + possible_moves_score + blocked_pieces_score
+
+    return total_score
+
+def opponent_can_form_mill(board, player):
+    opponent_color = 'black' if player == 'human' else 'white'
+    opponent_stones = board['currentState']['computerStones'] if player == 'human' else board['currentState']['humanStones']
+
+    for mill in mills_positions:
+        if sum(any(stone['square'] == position['square'] and stone['index'] == position['index'] for stone in opponent_stones) for position in mill) == 2:
+            empty_positions = [position for position in mill if not any(stone['square'] == position['square'] and stone['index'] == position['index'] for stone in opponent_stones)]
+            if empty_positions:
+                return True
+
+    return False
+
+#broj igraca
 def numOfValue(board, player):
     if player == 'human':
         return len(board['currentState']['humanStones'])
     else:
         return len(board['currentState']['computerStones'])
 
-
-def numberOfMoveablePiecesHeuristic(board, move, player):
-    isStage1 = len(board['currentState']['humanStones']) + len(board['currentState']['computerStones']) <= 18
-
-    numPlayerOneTokens = numOfValue(board, 'human')
-    numPlayerTwoTokens = numOfValue(board, 'computer')
-
-    movablePiecesBlack = 0
-
-    if not isStage1:
-        movablePiecesBlack = len(find_available_position(board, 'computer'))
-
-    if not isStage1:
-        if numPlayerTwoTokens <= 2 or movablePiecesBlack == 0:
-            evaluation = float('inf')
-        elif numPlayerOneTokens <= 2:
-            evaluation = float('-inf')
-        else:
-            evaluation = 100 * (numPlayerOneTokens - numPlayerTwoTokens)
-            evaluation -= 50 * movablePiecesBlack
-    else:
-        evaluation = 100 * (numPlayerOneTokens - numPlayerTwoTokens)
-
-    return evaluation
-
-def numberOfPiecesHeuristic(board, player):
-    isStage1 = len(board['currentState']['humanStones']) + len(board['currentState']['computerStones']) < 18
-    numPlayerOneTokens = numOfValue(board, player)
-    numPlayerTwoTokens = numOfValue(board, player)
-
-    movablePiecesBlack = 0
-
-    if not isStage1:
-        movablePiecesBlack = len(find_available_position(board, player))
-
-    if not isStage1:
-        if numPlayerTwoTokens <= 2 or movablePiecesBlack == 0:
-            evaluation = float('inf')
-        elif numPlayerOneTokens <= 2:
-            evaluation = float('-inf')
-        else:
-            evaluation = 200 * (numPlayerOneTokens - numPlayerTwoTokens)
-    else:
-        evaluation = 100 * (numPlayerOneTokens - numPlayerTwoTokens)
-
-    return evaluation
-
-#TODO jedna koja ima sve  
-# def advancedHeuristic(board, player):
-#     isStage1 = len(board['currentState']['humanStones']) + len(board['currentState']['computerStones']) < 18
-#     numPlayerOneTokens = numOfValue(board, player)
-#     numPlayerTwoTokens = numOfValue(board, player)
-
-#     numPlayerOneMills = numOfMills(board, player)
-#     numPlayerTwoMills = numOfMills(board, player)
-
-#     numPlayerOneBlocked = numOfBlocked(board, player)
-#     numPlayerTwoBlocked = numOfBlocked(board, player)
-
-#     numPlayerOnePotentialMills = numOfPotentialMills(board, player)
-#     numPlayerTwoPotentialMills = numOfPotentialMills(board, player)
-
-#     if not isStage1:
-#         evaluation = 200 * (numPlayerOneTokens - numPlayerTwoTokens) + 50 * (numPlayerOneMills - numPlayerTwoMills) - 50 * (numPlayerOneBlocked - numPlayerTwoBlocked) + 100 * (numPlayerOnePotentialMills - numPlayerTwoPotentialMills)
-#     else:
-#         evaluation = 100 * (numPlayerOneTokens - numPlayerTwoTokens)
-
-#     return evaluation
-
+#broj mlinova
 def numOfMills(board, player):
     mills = 0
 
@@ -237,6 +202,68 @@ def numOfMills(board, player):
             mills += 1
 
     return mills
+
+#broj blokiranih mlinova
+def count_blocked_mills(board, player):
+    blocked_mills = 0
+
+    # Get the opponent's stones
+    opponent_stones = board['currentState']['computerStones'] if player == 'human' else board['currentState']['humanStones']
+
+    # Iterate over all possible mill positions
+    for mill in mills_positions:
+        # Check if the player has two pieces in this mill position
+        player_pieces_in_mill = [position for position in mill if position in board['currentState'][player + 'Stones']]
+        if len(player_pieces_in_mill) == 2:
+            # Check if the remaining position is occupied by the opponent
+            remaining_position = [position for position in mill if position not in player_pieces_in_mill][0]
+            if remaining_position in opponent_stones:
+                blocked_mills += 1
+
+    return blocked_mills
+
+#broj potencijalnih mlinova
+def count_potential_mills(board, player):
+    potential_mills = 0
+
+    # Get the player's stones
+    player_stones = board['currentState']['humanStones'] if player == 'human' else board['currentState']['computerStones']
+
+    # Iterate over all possible mill positions
+    for mill in mills_positions:
+        # Check if the player has two pieces in this mill position and the third position is empty
+        player_pieces_in_mill = [position for position in mill if position in player_stones]
+        if len(player_pieces_in_mill) == 2:
+            # Check if the remaining position is empty
+            remaining_position = [position for position in mill if position not in player_pieces_in_mill][0]
+            if remaining_position not in board['currentState']['humanStones'] and remaining_position not in board['currentState']['computerStones']:
+                potential_mills += 1
+
+    return potential_mills
+
+#broj mogucih pomeranja
+def count_possible_moves(board, player):
+    # Get the available positions for the player
+    available_positions = find_available_position(board, player)
+
+    # The number of possible moves is the number of available positions
+    return len(available_positions)
+
+def count_blocked_pieces(board, player):
+    blocked_pieces = 0
+
+    # Get the player's stones
+    player_stones = board['currentState']['humanStones'] if player == 'human' else board['currentState']['computerStones']
+
+    # Iterate over all player's stones
+    for stone in player_stones:
+        # Get the available moves for this stone
+        available_moves = find_available_moves(board['currentState']['humanStones'], board['currentState']['computerStones'], stone)
+        # If there are no available moves, the stone is blocked
+        if len(available_moves) == 0:
+            blocked_pieces += 1
+
+    return blocked_pieces
 
 def check_if_mill_blocked(board, move, player):
 
@@ -320,7 +347,7 @@ def find_available_position(board, player):
             return  find_avaliable_if_tree(board['currentState']['computerStones'], board['currentState']['humanStones'])
         else:
             return find_available_moves(board['currentState']['computerStones'], board['currentState']['humanStones'])
-            
+
 
 #nalazenje slobodnih poteza za pomeranje kamencica
 def find_available_moves(humanStones, computerStones, selectedStone):
@@ -360,7 +387,6 @@ def find_avaliable_if_tree(computerStones, humanStones):
             available_positions.append(position)
 
     return available_positions
-
 
 #isMills
 #check for the mill from mills_positions if im sending [{'square': 2, 'index': 6, 'color': 'black'}]
@@ -404,9 +430,6 @@ def move_stone(stones, selected_stone, new_stone):
     return new_stones
 
 
-def evaluate(white_left, black_left):
-    return white_left - black_left
-
 
 #metoda za izbacivanje stones
 def remove_stone(stones, stone, allWhiteMills):
@@ -422,78 +445,66 @@ def remove_stone(stones, stone, allWhiteMills):
 
     return new_stones 
 
-## TESTOVI
+def make_move(board, move, player):
+    new_board = copy.deepcopy(board)
+    if player == 'human':
+        new_board['currentState']['humanStones'].append(move)
+    else: # player == 'computer'
+        new_board['currentState']['computerStones'].append(move)
+    return new_board
 
-# def test_check_if_mill_blocked():
-#     # Testni slučaj 1: Potez blokira mlin
-#     board1 = {
-#         'currentState': {
-#             'humanStones': [{'square': 0, 'index': 2}, {'square': 0, 'index': 3}],
-#             'computerStones': []
-#         },
-#         'pending': {
-#             'totalHuman': 0,
-#             'totalComputer': 0,
-#         },
-#         'out': {
-#             'totalHuman': 0,
-#             'totalComputer': 0,
-#         }
-#     }
-#     move1 = {'square': 0, 'index': 2, 'color': 'balck'}
-#     result1 = check_for_mill2(board1, move1, "computer")
-#     print(f"Test 1: {'Blokiran' if result1 else 'Moguc'}")
+def minimax2(board, depth, player):
+    # print(f"Game over: {game_over(board)}, Depth: {depth}")
+    if game_over(board) or depth == 0:
+        return heuristic(board, player), None
 
-#     # Testni slučaj 2: Potez ne blokira mlin
-#     board2 = {
-#         'currentState': {
-#             'humanStones': [{'square': 0, 'index': 0}],
-#             'computerStones': []
-#         },
-#         'pending': {
-#             'totalHuman': 0,
-#             'totalComputer': 0,
-#         },
-#         'out': {
-#             'totalHuman': 0,
-#             'totalComputer': 0,
-#         }
-#     }
-#     move2 = {'square': 0, 'index': 2, 'color': 'black'}
-#     result2 = check_for_mill2(board2, move2, "computer")
-#     print(f"Test 2: {'Blokiran' if result2 else 'Nije blokiran'}")
+    if player == 'computer':
+        bestScore = float('-inf')
+        bestMove = None
+        for move in find_available_position(board, player):
+            new_board = make_move(board, move, player)
+            score, _ = minimax2(new_board, depth - 1, 'human')
+            # print(f"Score: {score}, Best Score: {bestScore}, Move: {move}, Best Move: {bestMove}")  # Add print statement
+            if score > bestScore:
+                bestScore = score
+                bestMove = move
+        return bestScore, bestMove
 
-# # Pozivamo funkciju za testiranje
-# test_check_if_mill_blocked()
+    else:  # Human player's turn
+        bestScore = float('inf')
+        bestMove = None
+        for move in find_available_position(board, player):
+            new_board = make_move(board, move, player)
+            score, _ = minimax2(new_board, depth - 1, 'computer')
+            # print(f"Score: {score}, Best Score: {bestScore}, Move: {move}, Best Move: {bestMove}")  # Add print statement
+            if score < bestScore:
+                bestScore = score
+                bestMove = move
+        return bestScore, bestMove
+    
+def make_best_move(board, player):
+    _, best_move = minimax2(board, 3, player)
+    return best_move
 
-# print(determine_winner(5, 5))  
+def execute_best_move():
+    board = {
+        'currentState': {
+            'humanStones': [
+                {'square': 0, 'index': 0},  {'square': 0, 'index': 1}
+            ],
+            'computerStones': []
+        },
+        'pending': {
+            'totalHuman': 8,
+            'totalComputer': 9,
+        },
+        'out': {
+            'totalHuman': 0,
+            'totalComputer': 0,
+        }
+    }
+    print(find_available_position(board, "human"))
+    return make_best_move(board, 'computer')
 
-# computerStones = [{'square': 2, 'index': 6}, {'square': 2, 'index': 5}, {'square': 2, 'index': 4}, {'square': 2, 'index': 7}]
-# allWhiteMills = [{'square': 0, 'index': 0}, {'square': 0, 'index': 1}]
-# stone1 = {'square': 2, 'index': 6}
-# stone2 = {'square': 2, 'index': 7} 
-# print("REZULTAT 1")
-# print(find_avaliable_if_tree(computerStones, allWhiteMills))
-
-# if check_for_mill(computerStones):
-#     print("A mill has been formed")
-# else:
-#     print("No mill has been formed")
-
-# humanStones = humanStones = [{'square': 0, 'index': 0}, {'square': 0, 'index': 1}]
-# selectedStone = {'square': 0, 'index': 1}
-
-# result = find_available_moves(humanStones, computerStones, selectedStone)
-# print("REZULTAT")
-# print(result)
-
-
-
-
-
-
-
-
-
-
+print("BEST MOVE", execute_best_move())
 
