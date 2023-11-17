@@ -251,3 +251,175 @@
 #         return "Human is the winner"
 #     else:
 #         return None
+
+
+# #metoda za pomeranje stones na neki move
+# def move_stone(stones, selected_stone, new_stone):
+#     # Pravimo kopiju niza `stones` kako bismo zadržali originalni niz nepromenjen
+#     new_stones = stones.copy()
+
+#     # Pronađemo indeks odabranog kamena u nizu (ako postoji)
+#     index = next((i for i, stone in enumerate(new_stones) if stone == selected_stone), None)
+
+#     if index is not None:
+#         # Zamena odabranog kamena sa novim kamenom na istom indeksu
+#         new_stones[index] = new_stone
+
+#     return new_stones
+
+
+# def make_best_move(board, player):
+#     best_score, best_move = minimax2(board, 3, player)
+#     print(best_score)
+
+#     # Ako postoji najbolji potez, pokušajte ga izvršiti
+#     if best_move:
+#         if best_score == 100:
+#             print("No mill opportunity. Placing a stone randomly.")
+#             # Inače, postavite kamen na nasumičnu poziciju
+#             available_positions = find_available_position(board, player)
+#             if available_positions:
+#                 move = random.choice(available_positions)
+#                 return make_move(board, move, player)
+#         else:
+#             # Inače, izvršite potez s najboljom heuristikom
+#             print("Executing the best move.", best_move)
+#             return make_move(board, best_move, player)
+
+#     # Ako nema najboljeg poteza, postavite kamen na nasumičnu poziciju
+#     available_positions = find_available_position(board, player)
+#     if available_positions:
+#         move = random.choice(available_positions)
+#         return make_move(board, move, player)
+
+#     return None
+
+
+# # Example usage:
+# board = {
+#     'currentState': {
+#         'humanStones': [ { 'square': 0, 'index': 7}, { 'square': 0, 'index': 5 }],  # Your humanStones list
+#         'computerStones': [{ 'square': 1, 'index': 0 }, { 'square': 1, 'index': 1}, { 'square': 0, 'index':6 }, { 'square': 0, 'index': 7 }]  # Your computerStones list
+#     },
+    
+# }  # Your board dictionary
+
+# third_stone_position = check_mills55(board, 'computer')
+# if third_stone_position:
+#     print(f"A mill can be formed at position {third_stone_position}")
+# else:
+#     print("No mills can be formed.")
+
+
+
+# #TODO jos heuristika
+# def getHeuristic(board, player):
+#     mill = check_mills55(board, player)
+
+#     if mill is not None:
+#         print(f'{player.capitalize()} formed a mill at positions: {mill}')
+#         return 1000
+
+#     # # opponent_player = 'human' if player == 'computer' else 'computer'
+#     # # opponent_mill_positions = check_for_mill(board, opponent_player)
+
+#     # # if opponent_mill_positions is not None:
+#     # #     print(f'{opponent_player.capitalize()} formed a mill at positions: {opponent_mill_positions}')
+#     # #     return -1000  # A large negative value for losing the game
+
+#     return 100  
+#     # new_board = make_move(board, player)
+#     # if check_for_mill2(board, player): 
+#     #     return 350
+#     # return 100
+
+ # if best_score == 1000:  # Mill opportunity
+        #     # print("Mill opportunity. Placing a stone to form a mill.")
+        #     updated_board = make_move(board, best_move, player)
+        #     mill_position = check_mills55(updated_board, player)
+        #     if mill_position:
+        #         print(f"A mill was formed at position {mill_position}.")
+        #         return updated_board
+        #     else:
+        #         # print("Unexpected: Mill was not formed.")
+        #         return make_move(updated_board, best_move, player)
+        # elif best_score == 100:  # No mill opportunity
+        #     # print("No mill opportunity. Placing a stone randomly.")
+        #     available_positions = find_available_position(board, player)
+        #     if available_positions:
+        #         move = random.choice(available_positions)
+        #         return make_move(board, move, player)
+        # else:
+
+
+# def check_mills55(board, player):
+#     player_stones = board['currentState'][f'{player}Stones']
+#     opponent_stones = board['currentState']['humanStones'] if player == 'computer' else board['currentState']['computerStones']
+    
+#     # Provera da li ima najmanje 2 kamena pre nego što proveri mlin
+#     if len(player_stones) < 2:
+#         print(f"Not enough stones for {player} to form a mill.")
+#         return None  # Nije moguće formirati mlin sa manje od 2 kamena
+
+#     for mill in mills_positions:
+#         mill_positions = []
+#         empty_positions = []
+
+#         for position in mill:
+#             if position in player_stones:
+#                 mill_positions.append(position)
+#             elif position in opponent_stones:
+#                 # If the position is occupied by an opponent's stone, it's not a valid mill position
+#                 return None
+#             elif position not in opponent_stones and position not in player_stones:
+#                 empty_positions.append(position)
+
+#         print(f"Checking mill: {mill}")
+#         print(f"Player stones in mill: {mill_positions}")
+#         print(f"Empty positions in mill: {empty_positions}")
+
+#         if len(mill_positions) == 2 and len(empty_positions) == 1:
+#             print(f"Mill positions: {mill_positions}, Empty positions: {empty_positions}")
+#             return empty_positions[0]  # Return the position that can form a mill
+
+#     print(f"No potential mills found for {player}.")
+#     return None  # No potential mill found
+
+
+# #minimax algorithm
+# def minimax(board, depth, player):
+    
+#     bestMove = float("-inf")
+#     best = None
+
+#     if depth == 0:
+#         return bestMove
+
+#     # global states_reached
+#     # states_reached += 1
+#     possible_configs = find_available_position(board, player)
+#     print(possible_configs)
+#     for move in possible_configs:
+#         print("MOVES")
+#         print(move)
+#         score = getHeuristic(board, move,  player)
+#         if bestMove < score:
+#             bestMove = score 
+#             best = move
+#             print("BESTTTTT")
+#             print(bestMove)
+#             return best
+
+
+# #     if depth != 0:
+# #         possible_configs = find_available_position(board, player)
+
+# # # za svaki od treba da nadjemo heuristiku, i da vratimo potez sa najvecom heuristikom
+# #         for move in possible_configs:
+# #             score = getHeuristic(board, move)
+# #             if bestMove < score:
+# #               bestMove = score 
+# #             # currentMove = minimax(move, depth - 1, False, getHeuristic(board)) 
+#     else:
+#         return bestMove
+
