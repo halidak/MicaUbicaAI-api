@@ -32,6 +32,7 @@ def your_view_function(request):
         whitePlayerStonesOut = data.get('whitePlayerStonesOut')
         blackPlayerStonesOut = data.get('blackPlayerStonesOut')
         print("PLAYER", player)
+        allMills = data.get('allMills')
         
         board = {
             'currentState': {
@@ -46,18 +47,23 @@ def your_view_function(request):
                 'totalHuman': whitePlayerStonesOut,
                 'totalComputer': blackPlayerStonesOut,
             },
-            'lastMill': mills
+            'lastMill': {
+                'human': allMills,
+                'computer': mills['computer']
+            }
         }
 
         print(board)
         
         
         board = make_best_move(board, 'computer', mills)
-        board = can_remove(board, 'computer', mills)
+        board3 = can_remove(board, 'computer', mills)
         board2 = make_best_move(board, 'computer', mills)
         new_stones = board['currentState']['computerStones']
         allBlack = board['lastMill']['computer']
         humanStones2 = board['currentState']['humanStones']
+
+        humanStones2_with_color = [{'square': stone['square'], 'index': stone['index'], 'color': 'white'} for stone in humanStones2]
         
         # computerStones.append(new_stone)
         available_positions = find_available_position(board, player)
@@ -93,10 +99,11 @@ def your_view_function(request):
             'bestMove': new_stones,
             'nextPlayer': player,
             'whitePlayerStonesOut': board['out']['totalHuman'],
-            'board': board2
+            'board': board2,
+            'computerMills': mills['computer']
         }
 
-
+        print("BELIIII", allMills)
         return Response(response_data)
     
 
@@ -389,11 +396,11 @@ def evaluate_board(board, player):
 
     # Count the number of potential mills for the current player and the opponent
     player_potential_mills = sum(1 for move in find_available_position(board, player) if potential_mill(board, move, player))
-    opponent_potential_mills = sum(1 for move in find_available_position(board, opponent) if potential_mill(board, move, opponent))
+    opponent_potential_mills = 0 #sum(1 for move in find_available_position(board, opponent) if potential_mill(board, move, opponent))
 
     # Count the number of pieces in potential mills for the current player and the opponent
     player_pieces_in_mills = sum(1 for move in find_available_position(board, player) if potential_mill(board, move, player))
-    opponent_pieces_in_mills = sum(1 for move in find_available_position(board, opponent) if potential_mill(board, move, opponent))
+    opponent_pieces_in_mills = 0 #sum(1 for move in find_available_position(board, opponent) if potential_mill(board, move, opponent))
 
     # Evaluate the board based on the above factors
     score = (player_pieces + 2 * player_mills + player_potential_mills + player_pieces_in_mills) - (opponent_pieces + 2 * opponent_mills + opponent_potential_mills + opponent_pieces_in_mills)
