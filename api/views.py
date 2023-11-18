@@ -53,6 +53,7 @@ def your_view_function(request):
         
         
         board = make_best_move(board, 'computer', mills)
+        board = can_remove(board, 'computer', mills)
         board2 = make_best_move(board, 'computer', mills)
         new_stones = board['currentState']['computerStones']
         allBlack = board['lastMill']['computer']
@@ -127,10 +128,6 @@ def potential_mills(board, move, player):
             # Uklanjamo potez iz liste kamenčića igrača jer je ovo samo privremena provera
             player_stones.remove(move)
             return True
-
-#can form mill with move
-    
-
 
 # find avaliable position za prvo dodavanje kamencica
 def find_available_position(board, player):
@@ -285,10 +282,11 @@ def make_move(board, move, player, mills):
     else: # player == 'computer'
         new_board['currentState']['computerStones'].append(move)
         # print("After move:", board)
-        if check_for_mill3(new_board, player, mills):
-            new_board = remove_random_stone(new_board, player)
-            # print("NEW",new_board)
-            
+    return new_board
+
+def can_remove(new_board, player, mills):
+    if check_for_mill3(new_board, player, mills):
+        return remove_random_stone(new_board, player)
     return new_board
 
 
