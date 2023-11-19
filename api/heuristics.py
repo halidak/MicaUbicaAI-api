@@ -423,3 +423,51 @@
 #     else:
 #         return bestMove
 
+# def minimax2(board, depth, player, mills):
+#     if game_over(board) or depth == 0:
+#         score = evaluate_board(board, player)
+#         return score, None
+
+#     if player == 'computer':
+#         best_value = float("-inf")
+#         best_move = None
+
+#         # Get the list of stones for the current player
+#         stones = board['currentState'][f'{player}Stones']
+
+#         # If there are no pending stones, consider moving the stones
+#         if board['pending'][f'total{player.capitalize()}'] > 0:
+#             possible_moves = find_available_position(board, player)
+#             for move in possible_moves:
+#                 new_board = make_move(copy.deepcopy(board), move, player, mills)
+#                 value, _ = minimax2(new_board, depth - 1, 'human', mills)
+
+#                 if value > best_value:
+#                     best_value = value
+#                     best_move = move
+#         else:
+#             for stone in stones:
+#                 possible_moves = find_available_moves(board, player, stone)
+#                 for move in possible_moves:
+#                     new_board = make_move(copy.deepcopy(board), (stone, move), player, mills)
+#                     value, _ = minimax2(new_board, depth - 1, 'human', mills)
+
+#                     if value > best_value:
+#                         best_value = value
+#                         best_move = (stone, move)
+
+#         return best_value, best_move
+
+#     else:
+#         best_value = float("inf")
+#         best_move = None
+#         possible_moves = find_available_position(board, player)
+#         for move in possible_moves:
+#             new_board = make_move(copy.deepcopy(board), move, player, mills)
+#             value, _ = minimax2(new_board, depth - 1, 'computer', mills)
+
+#             if value < best_value:
+#                 best_value = value
+#                 best_move = move
+
+#         return best_value, best_move
