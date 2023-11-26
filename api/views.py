@@ -316,8 +316,12 @@ def make_move(board, move, player, mills):
             new_board['currentState']['humanStones'].append(move)
         else: # player == 'computer'
             new_board['currentState']['computerStones'].append(move)
+        if check_for_mill(board, player):
+            remove_random_stone(board, player)
     else: 
         new_board = move_stone(new_board, move[0], move[1], player)
+        if check_for_mill(board, player):
+            remove_random_stone(board, player)
     return new_board
 
 def can_remove(new_board, player, mills):
@@ -325,7 +329,7 @@ def can_remove(new_board, player, mills):
         return remove_random_stone(new_board, player)
     return new_board
 
-def minimax2(board, depth, player, mills, stone = None, destination=None):
+def minimax2(board, depth, player, mills, stone=None, destination=None):
     if game_over(board) or depth == 0:
         score = evaluate_board(board, player, stone, destination)
         return score, None
@@ -334,7 +338,6 @@ def minimax2(board, depth, player, mills, stone = None, destination=None):
         best_value = float("-inf")
         best_move = None
 
-        # print(f"Pending stones for {player}: {board['pending'][f'{player}']}")
         stones = board['currentState'][f'{player}Stones']
 
         if board['pending'][f'{player}'] > 0:
@@ -348,28 +351,31 @@ def minimax2(board, depth, player, mills, stone = None, destination=None):
                     best_value = value
                     best_move = move
         else:
-            print(f"Stones: {stones}")
             for stone in stones:
                 if len(stones) == 3:
                     possible_moves = find_avaliable_if_tree(board)
                 else:
                     possible_moves = find_available_position(board, player, stone)
-                    if not possible_moves:
-                        print(f"No possible moves for stone {stone}")
-                        continue
+                if not possible_moves:
+                    print(f"No possible moves for stone {stone}")
+                    continue
+
+                stone_best_move = None
+                stone_best_value = float('-inf')
+
                 for move in possible_moves:
-                    print("MOVE IZ MINIMAXA", move)
                     new_board = make_move(copy.deepcopy(board), (stone, move), player, mills)
                     value, _ = minimax2(new_board, depth - 1, 'human', mills, stone, move)
 
-                    if value > best_value:
-                        best_value = value
-                        best_move = (stone, move)
-                    else:
-                        print(f"Move {move} does not improve best value {best_value}")
+                    value += evaluate_board(new_board, player, stone, move)
 
-            if best_move is None:
-                print("No move improved the best value")
+                    if value > stone_best_value:
+                        stone_best_value = value
+                        stone_best_move = (stone, move)
+
+                if stone_best_move is not None and stone_best_value > best_value:
+                    best_value = stone_best_value
+                    best_move = stone_best_move
 
         return best_value, best_move
 
@@ -380,7 +386,6 @@ def minimax2(board, depth, player, mills, stone = None, destination=None):
 
         if board['pending'][f'{player}'] > 0:
             possible_moves = find_available_position(board, player, None)
-            
 
             for move in possible_moves:
                 new_board = make_move(copy.deepcopy(board), move, player, mills)
@@ -398,15 +403,26 @@ def minimax2(board, depth, player, mills, stone = None, destination=None):
                 if not possible_moves:
                     print(f"No possible moves for stone {stone}")
                     continue
+
+                stone_best_move = None
+                stone_best_value = float('inf')
+
                 for move in possible_moves:
                     new_board = make_move(copy.deepcopy(board), (stone, move), player, mills)
                     value, _ = minimax2(new_board, depth - 1, 'computer', mills, stone, move)
 
-                    if value < best_value:
-                        best_value = value
-                        best_move = (stone, move)
+                    value -= evaluate_board(new_board, player, stone, move)
+
+                    if value < stone_best_value:
+                        stone_best_value = value
+                        stone_best_move = (stone, move)
+
+                if stone_best_move is not None and stone_best_value < best_value:
+                    best_value = stone_best_value
+                    best_move = stone_best_move
 
         return best_value, best_move
+
     
 def make_best_move(board, player, mills):
     # print("Player",player)
