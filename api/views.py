@@ -105,7 +105,7 @@ def your_view_function(request):
     
 def game_over(board):
     # Check if a player cannot make a valid move
-    # if len(find_available_position(board, 'human')) == 0 or len(find_available_position(board, 'computer')) == 0:
+    # if len(find_available_position(board, 'human', stone)) == 0 or len(find_available_position(board, 'computer', stone)) == 0:
     #     return True
 
     # Check if a player has less than three pieces on the board
@@ -161,7 +161,7 @@ def find_available_position(board, player, selectedStone = None):
 
 #nalazenje slobodnih poteza za pomeranje kamencica
 def find_available_moves(board, selectedStone):
-    print("Selected Stone:", selectedStone)
+    # print("Selected Stone:", selectedStone)
     available_moves = []
 
     humanStones = board['currentState']['humanStones']
@@ -185,9 +185,9 @@ def find_available_moves(board, selectedStone):
             # Check if the position is occupied
             if not any(stone['square'] == move_square and stone['index'] == move_index for stone in humanStones + computerStones):
                 available_moves.append(move_position)
-                print("AVa", available_moves)
-            else:
-                print(f"Move {move_position} is occupied")
+                # print("AVa", available_moves)
+            # else:
+            #     print(f"Move {move_position} is occupied")
 
     return available_moves
 
@@ -274,12 +274,12 @@ def remove_random_stone(board, player):
 
     # Find all opponent stones that are not in a mill
     non_mill_stones = [stone for stone in opponent_stones if not check_stone_in_mill(new_board, stone, player)]
-    print(f"Non-mill stones: {non_mill_stones}")
+    # print(f"Non-mill stones: {non_mill_stones}")
 
     if non_mill_stones:
         # Remove a random stone that is not in a mill
         stone_to_remove = random.choice(non_mill_stones)
-        print(f"Removing stone: {stone_to_remove}")
+        # print(f"Removing stone: {stone_to_remove}")
         opponent_stones.remove(stone_to_remove)
         new_board['out']['human'] += 1
     else:
@@ -329,7 +329,7 @@ def can_remove(new_board, player, mills):
         return remove_random_stone(new_board, player)
     return new_board
 
-def minimax2(board, depth, player, mills, stone=None, destination=None):
+def minimax2(board, depth, player, mills, alpha, beta, stone=None, destination=None):
     if game_over(board) or depth == 0:
         score = evaluate_board(board, player, stone, destination)
         return score, None
@@ -345,11 +345,19 @@ def minimax2(board, depth, player, mills, stone=None, destination=None):
 
             for move in possible_moves:
                 new_board = make_move(copy.deepcopy(board), move, player, mills)
-                value, _ = minimax2(new_board, depth - 1, 'human', mills)
+                initial_value = evaluate_board(new_board, player, stone, move)
+                value, _ = minimax2(new_board, depth - 1, 'human', mills, alpha, beta)
+
+                value += initial_value
 
                 if value > best_value:
                     best_value = value
                     best_move = move
+
+                alpha = max(alpha, best_value)
+                if beta <= alpha:
+                    break
+
         else:
             for stone in stones:
                 if len(stones) == 3:
@@ -357,7 +365,7 @@ def minimax2(board, depth, player, mills, stone=None, destination=None):
                 else:
                     possible_moves = find_available_position(board, player, stone)
                 if not possible_moves:
-                    print(f"No possible moves for stone {stone}")
+                    # print(f"No possible moves for stone {stone}")
                     continue
 
                 stone_best_move = None
@@ -365,7 +373,7 @@ def minimax2(board, depth, player, mills, stone=None, destination=None):
 
                 for move in possible_moves:
                     new_board = make_move(copy.deepcopy(board), (stone, move), player, mills)
-                    value, _ = minimax2(new_board, depth - 1, 'human', mills, stone, move)
+                    value, _ = minimax2(new_board, depth - 1, 'human', mills, alpha, beta, stone, move)
 
                     value += evaluate_board(new_board, player, stone, move)
 
@@ -376,6 +384,10 @@ def minimax2(board, depth, player, mills, stone=None, destination=None):
                 if stone_best_move is not None and stone_best_value > best_value:
                     best_value = stone_best_value
                     best_move = stone_best_move
+                
+                alpha = max(alpha, best_value)
+                if alpha >= beta:
+                    break
 
         return best_value, best_move
 
@@ -389,11 +401,19 @@ def minimax2(board, depth, player, mills, stone=None, destination=None):
 
             for move in possible_moves:
                 new_board = make_move(copy.deepcopy(board), move, player, mills)
-                value, _ = minimax2(new_board, depth - 1, 'computer', mills)
+                initial_value = evaluate_board(new_board, player, stone, move)
+                value, _ = minimax2(new_board, depth - 1, 'computer', mills, alpha, beta)
+
+                value -= initial_value
 
                 if value < best_value:
                     best_value = value
                     best_move = move
+
+                beta = min(beta, best_value)
+                if beta <= alpha:
+                    break
+
         else:
             for stone in stones:
                 if len(stones) == 3:
@@ -401,7 +421,7 @@ def minimax2(board, depth, player, mills, stone=None, destination=None):
                 else:
                     possible_moves = find_available_position(board, player, stone)
                 if not possible_moves:
-                    print(f"No possible moves for stone {stone}")
+                    # print(f"No possible moves for stone {stone}")
                     continue
 
                 stone_best_move = None
@@ -409,29 +429,43 @@ def minimax2(board, depth, player, mills, stone=None, destination=None):
 
                 for move in possible_moves:
                     new_board = make_move(copy.deepcopy(board), (stone, move), player, mills)
-                    value, _ = minimax2(new_board, depth - 1, 'computer', mills, stone, move)
+                    value, _ = minimax2(new_board, depth - 1, 'computer', mills, alpha, beta, stone, move)
 
                     value -= evaluate_board(new_board, player, stone, move)
 
                     if value < stone_best_value:
                         stone_best_value = value
                         stone_best_move = (stone, move)
-
+                    
                 if stone_best_move is not None and stone_best_value < best_value:
                     best_value = stone_best_value
                     best_move = stone_best_move
 
-        return best_value, best_move
+                beta = min(beta, best_value)
+                if alpha >= beta:
+                    break
 
+        return best_value, best_move
     
 def make_best_move(board, player, mills):
     # print("Player",player)
     depth = 2
-    if board['pending'][player] == 0 and board['out'][player] < 6:
-        depth = 3
+    print("NAPOLJE", board['out']['human'])
+    print("NAPOLJE", board['out']['computer'])
+    if len(board['currentState'][f'{player}Stones']) == 3:
+        depth -= 1
+    elif board['pending'][player] == 0:
+        depth += 1
     else:
         depth = 2
-    best_score, best_move = minimax2(board, depth, player, mills)
+        
+    print("DUBINA", depth)
+    alpha = float("-inf")
+    beta = float("inf")
+    # depth = 3
+    # alpha = float("-inf")
+    # beta = float("inf")
+    best_score, best_move = minimax2(board, depth, player, mills, alpha, beta)
     print(best_move)
     print(best_score)
 
@@ -516,7 +550,7 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
         for move in player_moves:
             if potential_mill(board, move, player):
                 player_potential_mills += 10
-                score += 5  # Dodajte veću vrednost za formiranje mlinova
+                score += 20  # Dodajte veću vrednost za formiranje mlinova
         
         # # Dodavanje težine za postavljanje figura između kamena
         # for move in player_moves:
@@ -563,8 +597,10 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
         player_pieces_in_mills = sum(1 for stone in board['currentState'][f'{player}Stones'] if any(potential_mill(board, (stone, move), player) for move in find_available_position(board, player, stone)))
         opponent_pieces_in_mills = sum(1 for stone in board['currentState'][f'{opponent}Stones'] if any(potential_mill(board, (stone, move), opponent) for move in find_available_position(board, opponent, stone)))
 
-
         if board["pending"][player] == 0:
+            in_mill = any(all(stone['square'] == pos['square'] and stone['index'] == pos['index'] for stone in board['currentState'][f'{player}Stones'] for pos in position) for position in mills_positions)
+            if in_mill:
+                player_potential_mills += 60
             if potential_mill(board, (selectedStone, destination), player):
                 player_potential_mills += 50
         
@@ -611,7 +647,10 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
         else:
             player_moves = 0
             opponent_moves = 0
+        
+        player_stones_in_mills = sum(1 for stone in board['currentState'][f'{player}Stones'] if check_stone_in_mill(board, stone, player))
+        opponent_stones_in_mills = sum(1 for stone in board['currentState'][f'{opponent}Stones'] if check_stone_in_mill(board, stone, opponent))
 
         # Evaluate the board based on the above factors
-        score = (3 * player_moves + 2.5 * player_mills + 2 * player_potential_mills + player_pieces_in_mills) - (3 * opponent_moves + 2 * opponent_mills + opponent_potential_mills + opponent_pieces_in_mills) 
+        score = (3 * player_moves + 2.5 * player_mills + 2 * player_potential_mills + player_pieces_in_mills - player_stones_in_mills) - (3 * opponent_moves + 2 * opponent_mills + opponent_potential_mills + opponent_pieces_in_mills - opponent_stones_in_mills)
     return score
