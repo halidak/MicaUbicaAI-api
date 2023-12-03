@@ -300,9 +300,9 @@ def move_stone(board, stone, new_position, player):
 
 
     for s in stones:
-        if s == stone:  # if the stone is the one we want to move
-            s['square'] = new_position['square']  # update the square
-            s['index'] = new_position['index']  # update the index
+        if s == stone:  
+            s['square'] = new_position['square']  
+            s['index'] = new_position['index']
 
             break 
 
