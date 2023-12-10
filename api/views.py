@@ -161,7 +161,6 @@ def find_available_position(board, player, selectedStone = None):
 
 #nalazenje slobodnih poteza za pomeranje kamencica
 def find_available_moves(board, selectedStone):
-    # print("Selected Stone:", selectedStone)
     available_moves = []
 
     humanStones = board['currentState']['humanStones']
@@ -319,6 +318,8 @@ def make_move(board, move, player, mills):
         if check_for_mill(board, player):
             remove_random_stone(board, player)
     else: 
+        # print("Stone:", move[0])
+        # print("New position:", move[1])
         new_board = move_stone(new_board, move[0], move[1], player)
         if check_for_mill(board, player):
             remove_random_stone(board, player)
@@ -450,8 +451,6 @@ def minimax2(board, depth, player, mills, alpha, beta, stone=None, destination=N
 def make_best_move(board, player, mills):
     # print("Player",player)
     depth = 2
-    print("NAPOLJE", board['out']['human'])
-    print("NAPOLJE", board['out']['computer'])
     if len(board['currentState'][f'{player}Stones']) == 3:
         depth -= 1
     elif board['pending'][player] == 0:
@@ -542,7 +541,6 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
 
         # Približavanje formiranju mlinova
         player_potential_mills = 0 
-
 
         score = player_pieces - opponent_pieces
 
