@@ -77,7 +77,7 @@ def compVScomp(request):
         
         board['level'] = level
 
-        board = make_best_move(board, player, mills)
+        board, best_move = make_best_move(board, player, mills)
         board = can_remove2(board, player, mills)
         
         if player == 'computer' and board['pending']['computer'] > 0:
@@ -88,10 +88,12 @@ def compVScomp(request):
         response_data = {
             'nextPlayer': player,
             'board': board,
-            'level': level
+            'level': level,
+            'bestMove': best_move
         }
 
         # print(board)
+        print("MOVE", best_move)
         print("PLAYER", player)
         print("BELI", board['pending']['human'])
         print("CRNI", board['pending']['computer'])
@@ -378,7 +380,7 @@ def make_best_move(board, player, mills):
             stone, new_position = best_move
             mills = remove_stone_from_mills(mills, stone, player)
 
-        return new_board
+        return new_board, best_move
 
     # If no best move is found, place a stone randomly
     available_positions = find_available_position(board, player)
