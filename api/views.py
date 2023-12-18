@@ -56,7 +56,7 @@ def your_view_function(request):
             'level': level
         }
 
-        board = make_best_move(board, 'computer', mills)
+        board, best_move = make_best_move(board, 'computer', mills)
         board = can_remove(board, 'computer', mills)
         new_stones = board['currentState']['computerStones']
         allBlack = board['lastMill']['computer']
@@ -95,9 +95,11 @@ def your_view_function(request):
             'nextPlayer': player,
             'whitePlayerStonesOut': board['out']['human'],
             'board': board,
-            'computerMills': mills['computer']
+            'computerMills': mills['computer'],
+            'bestMove': best_move
         }
-
+        
+        print("MOVE",best_move)
         # print(board)
         print("beli", totalPlacedStones1)
         print("crni", totalPlacedStones2)
@@ -477,7 +479,7 @@ def make_best_move(board, player, mills):
             stone, new_position = best_move
             mills = remove_stone_from_mills(mills, stone, 'computer')
 
-        return new_board
+        return new_board, best_move
 
     # If no best move is found, place a stone randomly
     available_positions = find_available_position(board, player)
@@ -548,7 +550,7 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
         for move in player_moves:
             if potential_mill(board, move, player):
                 player_potential_mills += 10
-                score += 20  # Dodajte veću vrednost za formiranje mlinova
+                score += 10  
         
         # # Dodavanje težine za postavljanje figura između kamena
         # for move in player_moves:
