@@ -85,9 +85,10 @@ DATABASES = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Dodajte URL vašeg React projekta ovde
-    # Dodajte ostale dozvoljene origin URL-ove po potrebi
+    
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
