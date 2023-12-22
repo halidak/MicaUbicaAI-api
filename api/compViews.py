@@ -530,5 +530,5 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
         opponent_stones_in_mills = sum(1 for stone in board['currentState'][f'{opponent}Stones'] if check_stone_in_mill(board, stone, opponent))
 
         # Evaluate the board based on the above factors
-        score = (3 * player_moves + 2.5 * player_mills + 2 * player_potential_mills + player_pieces_in_mills - player_stones_in_mills) - (3 * opponent_moves + 2 * opponent_mills + opponent_potential_mills + opponent_pieces_in_mills - opponent_stones_in_mills)
+        score = (3 * player_moves + 2.5 * player_mills + 2 * player_potential_mills + player_pieces_in_mills - 2 * player_stones_in_mills) - (3 * opponent_moves + 2 * opponent_mills + opponent_potential_mills + opponent_pieces_in_mills - 2 * opponent_stones_in_mills)
     return score
