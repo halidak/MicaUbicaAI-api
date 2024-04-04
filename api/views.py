@@ -62,18 +62,12 @@ def your_view_function(request):
         allBlack = board['lastMill']['computer']
         humanStones2 = board['currentState']['humanStones']
         
-        # computerStones.append(new_stone)
-        # available_positions = find_available_position(board, player)
-        # print(available_positions)
-
         isMills = check_for_mill(board, "computer")
 
         print("LAST MILL", board['lastMill'])
 
-        #decrement setTotalPlacedStones2 but if its > 0 and not None
         if totalPlacedStones2 is not None and totalPlacedStones2 > 0:
             totalPlacedStones2 = totalPlacedStones2 - 1
-        #else return old value
         else:
             totalPlacedStones2 = totalPlacedStones2
 
@@ -86,7 +80,6 @@ def your_view_function(request):
         response_data = {
             'humanStones': humanStones2,
             'computerStones': new_stones,
-            # 'availablePositions': available_positions,
             'totalPlacedStones2': totalPlacedStones2,
             'allowed_moves': allowed_moves,
             'isComputerMills': isMills,
@@ -100,17 +93,11 @@ def your_view_function(request):
         }
         
         print("MOVE",best_move)
-        # print(board)
         print("beli", totalPlacedStones1)
         print("crni", totalPlacedStones2)
         return Response(response_data)
     
 def game_over(board):
-    # Check if a player cannot make a valid move
-    # if len(find_available_position(board, 'human', stone)) == 0 or len(find_available_position(board, 'computer', stone)) == 0:
-    #     return True
-
-    # Check if a player has less than three pieces on the board
     if board['out']['human'] == 7 or board['out']['computer'] == 7:
         return True
 
@@ -134,8 +121,6 @@ def find_available_position(board, player, selectedStone = None):
                     available_positions.append({'square': move_square, 'index': move_index})
 
             return available_positions
-        # if len(board['currentState']['humanStones']) == 3 and selectedStone is not None:
-        #     return  find_avaliable_if_tree(board, selectedStone)
         else:
             return find_available_moves(board, selectedStone)
     
@@ -206,26 +191,6 @@ def find_avaliable_if_tree(board):
 
     return available_positions
 
-#test
-# board = {
-#     'currentState': {
-#         'humanStones': [{'square': 2, 'index': 6, 'color': 'black'}, {'square': 0, 'index': 7, 'color': 'black'}, {'square': 2, 'index': 8, 'color': 'black'}],
-#         'computerStones': [{'square': 0, 'index': 0, 'color': 'white'}, {'square': 0, 'index': 1, 'color': 'white'}, {'square': 0, 'index': 2, 'color': 'white'}]
-#     },
-#     'pending': {
-#         'human': 0,
-#         'computer': 0,
-#     },
-#     'out': {
-#         'human': 0,
-#         'computer': 0,
-#     }
-# }
-# stone = {'square': 0, 'index': 2, 'color': 'white'}
-# print("Avaliable", find_avaliable_if_tree(board))
-
-#isMills
-#check for the mill from mills_positions if im sending [{'square': 2, 'index': 6, 'color': 'black'}]
 def check_for_mill(board, player):
     global all_mills
     # check for each player is mills
@@ -496,9 +461,6 @@ def remove_stone_from_mills(mills, stone, player):
 
 
 def is_between_stones(board, move, player):
-    """
-    Proverava da li je pozicija poteza između dva kamena igrača.
-    """
     player_stones = board['currentState'][f'{player}Stones']
     return any(abs(move['square'] - stone['square']) == 1 and move['index'] != stone['index'] for stone in player_stones)
 
@@ -552,11 +514,6 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
                 player_potential_mills += 10
                 score += 10  
         
-        # # Dodavanje težine za postavljanje figura između kamena
-        # for move in player_moves:
-        #     if is_between_stones(board, move, player):
-        #         score += 1
-
         if board["pending"][player] == 0:
             if potential_mill(board, (selectedStone, destination), player):
                 player_potential_mills += 50
@@ -627,10 +584,6 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
         # Count the number of potential mills for the current player and the opponent
         player_potential_mills = sum(1 for move in find_available_position(board, player, selectedStone) if potential_mill(board, move, player))
         opponent_potential_mills = sum(1 for move in find_available_position(board, opponent, selectedStone) if potential_mill(board, move, opponent))
-
-        # Count the number of pieces in potential mills for the current player and the opponent -- POPRAVI OVO
-        # player_pieces_in_mills = sum(1 for move in find_available_position(board, player, selectedStone) if potential_mill(board, move, player))
-        # opponent_pieces_in_mills = sum(1 for move in find_available_position(board, opponent, selectedStone) if potential_mill(board, move, opponent))
 
         player_pieces_in_mills = sum(1 for stone in board['currentState'][f'{player}Stones'] if any(potential_mill(board, (stone, move), player) for move in find_available_position(board, player, stone)))
         opponent_pieces_in_mills = sum(1 for stone in board['currentState'][f'{opponent}Stones'] if any(potential_mill(board, (stone, move), opponent) for move in find_available_position(board, opponent, stone)))

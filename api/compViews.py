@@ -453,42 +453,6 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
 
         # Evaluate the board based on the above factors
         score = (3 * player_moves + 1.5 * player_mills + 2 * player_potential_mills + player_pieces_in_mills - 2 * player_stones_in_mills) - (opponent_moves + 2 * opponent_mills + opponent_potential_mills + opponent_pieces_in_mills - 3 * opponent_stones_in_mills)
-    # elif level == 1:
-       
-    #     # Count the number of mills for the current player and the opponent
-    #     player_mills = sum(1 for mill in mills_positions if all(
-    #         any(stone['square'] == position['square'] and stone['index'] == position['index']
-    #             for stone in board['currentState'][f'{player}Stones']) for position in mill))
-        
-    #     opponent_mills = sum(1 for mill in mills_positions if all(
-    #         any(stone['square'] == position['square'] and stone['index'] == position['index']
-    #             for stone in board['currentState'][f'{opponent}Stones']) for position in mill))
-
-    #     # Count the number of potential mills for the current player and the opponent
-    #     player_potential_mills = sum(1 for move in find_available_position(board, player, selectedStone) if potential_mill(board, move, player))
-    #     opponent_potential_mills = sum(1 for move in find_available_position(board, opponent, selectedStone) if potential_mill(board, move, opponent))
-
-    #     # Count the number of pieces in potential mills for the current player and the opponent
-    #     player_pieces_in_mills = sum(1 for stone in board['currentState'][f'{player}Stones'] if any(potential_mill(board, (stone, move), player) for move in find_available_position(board, player, stone)))
-    #     opponent_pieces_in_mills = sum(1 for stone in board['currentState'][f'{opponent}Stones'] if any(potential_mill(board, (stone, move), opponent) for move in find_available_position(board, opponent, stone)))
-
-    #     if board["pending"][player] == 0:
-    #         in_mill = any(all(stone['square'] == pos['square'] and stone['index'] == pos['index'] for stone in board['currentState'][f'{player}Stones'] for pos in position) for position in mills_positions)
-    #         if in_mill:
-    #             player_potential_mills += 1600
-    #         if potential_mill(board, (selectedStone, destination), player):
-    #             player_potential_mills += 1500
-        
-    #     if board['pending'][player] > 0:
-    #         player_moves = len(find_available_position(board, player))
-    #         opponent_moves = len(find_available_position(board, opponent))
-    #     else:
-    #         player_moves = 0
-    #         opponent_moves = 0
-
-    #     # Evaluate the board based on the above factors
-    #     score = (3 * player_moves + 2.5 * player_mills + 2 * player_potential_mills + 1.5 * player_pieces_in_mills) - (3 * opponent_moves + 2 * opponent_mills + opponent_potential_mills + opponent_pieces_in_mills) 
-
     else:
            # Count the number of mills for the current player and the opponent
         player_mills = sum(1 for mill in mills_positions if all(
@@ -502,10 +466,6 @@ def evaluate_board(board, player, selectedStone = None, destination = None):
         # Count the number of potential mills for the current player and the opponent
         player_potential_mills = sum(1 for move in find_available_position(board, player, selectedStone) if potential_mill(board, move, player))
         opponent_potential_mills = sum(1 for move in find_available_position(board, opponent, selectedStone) if potential_mill(board, move, opponent))
-
-        # Count the number of pieces in potential mills for the current player and the opponent -- POPRAVI OVO
-        # player_pieces_in_mills = sum(1 for move in find_available_position(board, player, selectedStone) if potential_mill(board, move, player))
-        # opponent_pieces_in_mills = sum(1 for move in find_available_position(board, opponent, selectedStone) if potential_mill(board, move, opponent))
 
         player_pieces_in_mills = sum(1 for stone in board['currentState'][f'{player}Stones'] if any(potential_mill(board, (stone, move), player) for move in find_available_position(board, player, stone)))
         opponent_pieces_in_mills = sum(1 for stone in board['currentState'][f'{opponent}Stones'] if any(potential_mill(board, (stone, move), opponent) for move in find_available_position(board, opponent, stone)))
